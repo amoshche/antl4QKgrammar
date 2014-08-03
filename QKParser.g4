@@ -9,11 +9,21 @@ script: STATEMENT_SEPARATOR? statement? (STATEMENT_SEPARATOR statement)* EOF;
 comment: (ML_COMMENT | SL_COMMENT); 
 statement: expr; 
 
-expr: ID COLON<assoc=right> expr
-      | expr PLUS<assoc=right> expr
+expr: expr PLUS<assoc=right> expr
+      | expr QMARK<assoc=right> expr
+      | expr EMARK<assoc=right> expr
+      | ID COLON<assoc=right> expr
+      | list expr
       | expr expr
-      | LONG; 
+      | list
+      | atom;
 
+
+list: longlist; 
+
+longlist: LONG<assoc=right> (LONG<assoc=right>)+;
+
+atom: LONG; 
 
 
 
