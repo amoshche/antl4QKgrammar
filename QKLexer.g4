@@ -142,7 +142,7 @@ BYTE_LIST: '0x' HEX HEX HEX+;
 //   temporal
 
 // date
-// TODO possible calls on a variable
+// TODO possible calls on a variable if this is not overriden key
 // .date
 // .year
 // .mm
