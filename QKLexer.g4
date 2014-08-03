@@ -44,7 +44,7 @@ ASCII_PRINTABLE: (' '..'~');
 FUNS: '{' ;
 FUNE: '}' ;
 ARGS: '[' ; //args start in Q | table key defs start | block in if, while, $ map start in k)
-ARGE: '[' ; //args end in Q | table key defs end | block end in if, while, $  map end in k)
+ARGE: '[' ; //args end in Q | table key defs end | block end in if, while, $ map end in k)
 LS: '(' ; //precedence, table, list start
 LE: ')' ; //precedence, table, list end
 
@@ -82,7 +82,6 @@ EACH: '\''{_input.LA(1) != ':'}?; //each or throw
 
 OVER:'/';
 SCAN:'\\';
-//system commands?
 
 DOT: '.';
 //DOT_AMEND_TRAP_MODE: '.';
@@ -112,24 +111,24 @@ QMARK: '?';
 fragment
 NUM_DEC_PREFIX: ('-')? DIGIT+;
 
-LONG: NUM_DEC_PREFIX;
-LONG_NAN: '0N' | '0W' | '-0W';	
-LONG_SUFFIX: { isDigit(_input.LA(-1)) || (_input.LA(-2)=='0' && (_input.LA(-1)=='N' || _input.LA(-1)=='W')) }?'j';
+LONG: NUM_DEC_PREFIX | '0N' | '0W' | '-0W';
+LONG_SUFFIXED: NUM_DEC_PREFIX 'j' | '0Nj' | '0Wj' | '-0Wj';
                
 INT: NUM_DEC_PREFIX 'i' | '0Ni' | '0Wi' | '-0Wi';	
 
 SHORT: NUM_DEC_PREFIX 'h' | '0Nh' | '0Wh' | '-0Wh';	
 //LIST of LONG INT OR SHORT is LONG+ (LONG LONG_SUFFIX?|LONG_NAN|INT|SHORT)?;
 
-FLOAT: (NUM_DEC_PREFIX?'.'DIGIT+|NUM_DEC_PREFIX'.'DIGIT*)('e''-'?DIGIT+)?;
+FLOAT: NUM_DEC_PREFIX?'.'DIGIT+|NUM_DEC_PREFIX'.'DIGIT*;
+FLOAT_EXP: NUM_DEC_PREFIX?'.'DIGIT+|NUM_DEC_PREFIX'.'DIGIT*'e''-'?DIGIT+;
 FLOAT_NAN: '0n' | '0w' | '-0w';
-FLOAT_SUFFIX: { isDigit(_input.LA(-1))
-               || (isDigit(_input.LA(-2)) && _input.LA(-1)=='.')
-               || (_input.LA(-2)=='0' && (_input.LA(-1)=='N' || _input.LA(-1)=='W')) 
-               || (_input.LA(-2)=='0' && (_input.LA(-1)=='n' || _input.LA(-1)=='w')) }?'f';
+FLOAT_SUFFIXED: (NUM_DEC_PREFIX?'.'DIGIT+|NUM_DEC_PREFIX'.'DIGIT*
+                | NUM_DEC_PREFIX?'.'DIGIT+|NUM_DEC_PREFIX'.'DIGIT*'e''-'?DIGIT+
+                | '0n' | '0w' | '-0w')'f';
 
 REAL: (NUM_DEC_PREFIX?'.'DIGIT+|NUM_DEC_PREFIX'.'DIGIT*)('e''-'?DIGIT+)? 'e' | '0ne' | '0we' | '-0we' | '0Ne' | '0We' | '-0We';	
-//LIST of FLOAT OR REAL is ((LONG)+? FLOAT (LONG|FLOAT)* | FLOAT (LONG|FLOAT)*) ((LONG|FLOAT) FLOAT_SUFFIX?|FLOAT_NAN|REAL)?;
+//LIST of FLOAT OR REAL is ((LONG)+? (FLOAT|FLOAT_EXP|FLOAT_NAN) (LONG|FLOAT|FLOAT_EXP|FLOAT_NAN)*
+//   | (FLOAT|FLOAT_EXP|FLOAT_NAN) (LONG|FLOAT|FLOAT_EXP|FLOAT_NAN)*) (FLOAT|FLOAT_EXP|FLOAT_NAN|FLOAT_SUFFIXED|REAL)?;
 
 //   binary
 BOOLEAN: '0b' | '1b';
@@ -156,61 +155,36 @@ MONTH: DIGIT DIGIT DIGIT DIGIT '.' DIGIT DIGIT 'm' | '0Nm' | '0Wm' | '-0Wm';
 // MONTH_LIST is interpreted from (FLOAT)+ MONTH? if FLOATS can be read as MONTHS
 
 DATE: DIGIT DIGIT DIGIT DIGIT '.' DIGIT DIGIT '.' DIGIT DIGIT;
-DATE_NAN: '0Nd' | '0Wd' | '-0Wd';
-DATE_SUFFIX: { isDigit(_input.LA(-10))
-               && isDigit(_input.LA(-9))
-               && isDigit(_input.LA(-8))
-               && isDigit(_input.LA(-7))
-               && _input.LA(-6) == '.'
-               && isDigit(_input.LA(-5))
-               && isDigit(_input.LA(-4))
-               && _input.LA(-3) == '.'
-               && isDigit(_input.LA(-2))
-               && isDigit(_input.LA(-1)) }?'d';
-// DATE_LIST is of form DATE+ (DATE DATE_SUFFIX?|DATE_NAN)
+DATE_SUFFIXED: DIGIT DIGIT DIGIT DIGIT '.' DIGIT DIGIT '.' DIGIT DIGIT 'd' | '0Nd' | '0Wd' | '-0Wd';
+// DATE_LIST is of form DATE+ (DATE | DATE_SUFFIXED)
 
 MINUTE: DIGIT DIGIT ':' (DIGIT DIGIT)?; 
-MINUTE_SUFFIX: { isDigit(_input.LA(-5))
-                 && isDigit(_input.LA(-4))
-                 && _input.LA(-3) == ':'
-                 && isDigit(_input.LA(-2))
-                 && isDigit(_input.LA(-1)) }? DIGIT DIGIT ':' DIGIT+ '.'? DIGIT* 'u' 
-             | { isDigit(_input.LA(-5))
-                 && isDigit(_input.LA(-4))
-                 && _input.LA(-3) == ':'
-                 && isDigit(_input.LA(-2))
-                 && isDigit(_input.LA(-1)) }? ':'? 'u' 
-             | { isDigit(_input.LA(-3))
-                 && isDigit(_input.LA(-2))
-                 && _input.LA(-1) == ':' }? 'u';
-MINUTE_NAN: '0Nu' | '0Wu' | '-0Wu';   
-// MINUTE_LIST is of form MINUTE+ (MINUTE MINUTE_SUFFIX?|MINUTE_NAN)
-//                        | (MINUTE|SECOND|TIME)+ ((TIME|MINUTE|SECOND) MINUTE_SUFFIX|MINUTE_NAN)
+MINUTE_SUFFIXED: DIGIT DIGIT ':'? 'u'
+    | DIGIT DIGIT ':' DIGIT DIGIT 'u'
+    | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT 'u'
+    | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT* 'u'
+    | '0Nu' | '0Wu' | '-0Wu';   
+// MINUTE_LIST is of form MINUTE+ (MINUTE | MINUTE_SUFFIXED)
+//                        | (MINUTE|SECOND|TIME)+ (MINUTE_SUFFIXED)
 
 SECOND: DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT;
-SECOND_SUFFIX: { isDigit(_input.LA(-8))
-                 && isDigit(_input.LA(-7))
-                 && _input.LA(-6) == ':'
-                 && isDigit(_input.LA(-5))
-                 && isDigit(_input.LA(-4))
-                 && _input.LA(-3) == ':'
-                 && isDigit(_input.LA(-2))
-                 && isDigit(_input.LA(-1)) }? 'v';
-SECOND_NAN: '0Nv' | '0Wv' | '-0Wv';
-// SECOND_LIST is of form ((MINUTE)+? SECOND (MINUTE|SECOND)* | SECOND (MINUTE|SECOND)*) (SECOND SECOND_SUFFIX?|SECOND_NAN)?
-//                        | ((MINUTE|SECOND)+? TIME (MINUTE|SECOND|TIME)* | TIME (MINUTE|SECOND|TIME)*) ((TIME|MINUTE|SECOND) SECOND_SUFFIX|SECOND_NAN)?
+SECOND_SUFFIXED: DIGIT DIGIT ':'? 'v'
+    | DIGIT DIGIT ':' DIGIT DIGIT 'v'
+    | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT 'v'
+    | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT* 'v'
+    | '0Nv' | '0Wv' | '-0Wv';
+// SECOND_LIST is of form ((MINUTE)+? SECOND (MINUTE|SECOND)* | SECOND (MINUTE|SECOND)*) (SECOND|SECOND_SUFFIXED)?
+//                        | ((MINUTE|SECOND)+? TIME (MINUTE|SECOND|TIME)* | TIME (MINUTE|SECOND|TIME)*) (SECOND_SUFFIXED)?
 
 TIME: DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT DIGIT? DIGIT? DIGIT?;
-// Can not cover all possible cases, too much or clever backtracking required
-TIME_SUFFIX: { isDigit(_input.LA(-1)) }? 't';
 TIME_SUFFIXED: DIGIT DIGIT ':' 't'
-    | DIGIT 't'
+    | DIGIT+? ('.' DIGIT?)? 't'
     | DIGIT DIGIT ':' DIGIT DIGIT 't'
     | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT 't'
     | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT* 't'
     | '0Nt' | '0Wt' | '-0Wt';
 // TIME_LIST is of form ((MINUTE|SECOND)+? TIME (MINUTE|SECOND|TIME)* | TIME (MINUTE|SECOND|TIME)*) ((MINUTE|SECOND|TIME) TIME_SUFFIX?|TIME_SUFFIXED)?
-//                        | (MINUTE|SECOND|TIME)+ ((MINUTE|SECOND|TIME) TIME_SUFFIX|TIME_SUFFIXED)
+//                        | (MINUTE|SECOND|TIME)+ ((MINUTE 't' |SECOND|TIME) TIME_SUFFIX|TIME_SUFFIXED)
 
 
 fragment
@@ -219,17 +193,31 @@ DATETIME: DATE_FRAGMENT 'T'
     | DATE_FRAGMENT 'T' DIGIT DIGIT
     | DATE_FRAGMENT 'T' DIGIT DIGIT ':' DIGIT DIGIT
     | DATE_FRAGMENT 'T' DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT ('.' DIGIT*)?;
+DATETIME_SUFFIXED: DATE_FRAGMENT 'T' 'z'
+    | DATE_FRAGMENT 'T' DIGIT DIGIT 'z'
+    | DATE_FRAGMENT 'T' DIGIT DIGIT ':' DIGIT DIGIT 'z'
+    | DATE_FRAGMENT 'T' DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT ('.' DIGIT*)? 'z'
+    | '0Nz' | '0Wz' | '-0Wz';
+//DATE_TIME LIST is of form (DATE|DATETIME)+ (DATETIME | DATETIME_SUFFIXED)
 
-// Can not cover all possible cases, too much or clever backtracking required
-DATETIME_SUFFIX: { isDigit(_input.LA(-1)) }?'z';
- 
-DATETIME_NAN: '0Nz' | '0Wz' | '-0Wz';
-//DATE_TIME LIST is of form (DATE|DATETIME)+ (DATETIME DATETIME_SUFFIX?|DATETIME_NAN)
-
-
+TIMESPAN: DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT DIGIT DIGIT DIGIT DIGIT+
+    | DIGIT+ 'D' DIGIT*? ('.' DIGIT?)?
+    | DIGIT+ 'D' DIGIT DIGIT ':' DIGIT DIGIT
+    | DIGIT+ 'D' DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT
+    | DIGIT+ 'D' DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT*;
+TIMESPAN_SUFFIXED: DIGIT DIGIT ':' 'n'
+    | DIGIT+? ('.' DIGIT?)? 'n'
+    | DIGIT DIGIT ':' DIGIT DIGIT 'n'
+    | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT 'n'
+    | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT* 'n'
+    | DIGIT+ 'D' DIGIT*? ('.' DIGIT?)? 'n'
+    | DIGIT+ 'D' DIGIT DIGIT ':' DIGIT DIGIT 'n'
+    | DIGIT+ 'D' DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT 'n'
+    | DIGIT+ 'D' DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT* 'n'
+    | '0Nn' | '0Wn' | '-0Wn';
+// TIMESPAN_LIST is of form (FLOAT|MINUTE|SECOND|TIME|TIMESPAN)+? (TIMESPAN|TIMESPAN_SUFFIXED)?
+    
 // timestamp
-
-// timespan
 
 //   char related
 SYMBOL: '`' ((LETTER|DIGIT|'.'|':')* 
