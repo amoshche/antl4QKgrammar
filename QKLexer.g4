@@ -116,17 +116,7 @@ QMARK: '?';
 //1 | -1 WS+ "asd" stdout
 //2 | -2 WS+ "asd" stderr
 //other pos/neg int followed by () or "" is handle call
-/*
-This seems to allow spaces in between arg and $
-ICAST:  '1h$' | '2h$' | '4h$' | '5h$' | '6h$' | '7h$' | '8h$' | '9h$' | '10h$' | '11h$' | '12h$' | '13h$' | '14h$' | '15h$' | '16h$' | '17h$' | '18h$' | '19h$';
-CCAST: '"b"$' | '"g"$' | '"x"$' | '"h"$' | '"i"$' | '"j"$' | '"e"$' | '"f"$' | '"c"$' | '"s"$' | '"p"$' | '"m"$' | '"d"$' | '"z"$' | '"n"$' | '"u"$' | '"v"$' | '"t"$';
-CPARSE: '"B"$' | '"G"$' | '"X"$' | '"H"$' | '"I"$' | '"J"$' | '"E"$' | '"F"$' | '"C"$' | '"S"$' | '"P"$' | '"M"$' | '"D"$' | '"Z"$' | '"N"$' | '"U"$' | '"V"$' | '"T"$';
-SCAST:  '`boolean$1' | '`guid$1' | '`byte$' | '`short$' | '`int$' | '`long$' | '`real$' | '`float$' | '`char$' | '`$' | '`timestamp$' | '`month$' | '`date$' | '`datetime$' | '`timespan$' | '`minute$' | '`second$' | '`time$';
-ENUMEMPTYLIST: '`'(DOT (LETTER | LETTER (DROP_CUT|LETTER|DIGIT)* (LETTER|DIGIT)))+
-              | (LETTER | LETTER (DROP_CUT|LETTER|DIGIT)* (LETTER|DIGIT))'$()';
-ENUMCAST: '`'(DOT (LETTER | LETTER (DROP_CUT|LETTER|DIGIT)* (LETTER|DIGIT)))+
-              | (LETTER | LETTER (DROP_CUT|LETTER|DIGIT)* (LETTER|DIGIT))'$';
-*/
+
 
 DATETIMEOP: '.date' | '.year' | '.mm' | '.dd' | '.time' | '.hh' | '.minute' | '.ss';
 
@@ -164,33 +154,27 @@ MONTH: DIGIT DIGIT DIGIT DIGIT '.' DIGIT DIGIT 'm' | '0Nm' | '0Wm' | '-0Wm';
 DATE: DIGIT DIGIT DIGIT DIGIT '.' DIGIT DIGIT '.' DIGIT DIGIT;
 DATE_SUFFIXED: DIGIT DIGIT DIGIT DIGIT '.' DIGIT DIGIT '.' DIGIT DIGIT 'd' | '0Nd' | '0Wd' | '-0Wd';
 
-MINUTE: DIGIT DIGIT ':' (DIGIT DIGIT)?; 
+MINUTE: DIGIT DIGIT ':' (DIGIT DIGIT ':'?)?; 
 MINUTE_SUFFIXED: DIGIT DIGIT ':'? 'u'
-    | DIGIT DIGIT ':' DIGIT DIGIT 'u'
+    | DIGIT DIGIT ':' DIGIT DIGIT ':'? 'u'
     | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT 'u'
     | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT* 'u'
     | '0Nu' | '0Wu' | '-0Wu';   
-// MINUTE_LIST is of form MINUTE+ (MINUTE | MINUTE_SUFFIXED)
-//                        | (MINUTE|SECOND|TIME)+ (MINUTE_SUFFIXED)
 
 SECOND: DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT;
 SECOND_SUFFIXED: DIGIT DIGIT ':'? 'v'
-    | DIGIT DIGIT ':' DIGIT DIGIT 'v'
+    | DIGIT DIGIT ':' DIGIT DIGIT 'v' //surprisingly trailing ':' is not allowed
     | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT 'v'
-    | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT* 'v'
+    | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT DIGIT+ 'v' //surprisingly reqires 2 digitis
     | '0Nv' | '0Wv' | '-0Wv';
-// SECOND_LIST is of form ((MINUTE)+? SECOND (MINUTE|SECOND)* | SECOND (MINUTE|SECOND)*) (SECOND|SECOND_SUFFIXED)?
-//                        | ((MINUTE|SECOND)+? TIME (MINUTE|SECOND|TIME)* | TIME (MINUTE|SECOND|TIME)*) (SECOND_SUFFIXED)?
 
 TIME: DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT DIGIT? DIGIT? DIGIT?;
-TIME_SUFFIXED: DIGIT DIGIT ':' 't'
+TIME_SUFFIXED: DIGIT DIGIT? ':'? 't'
     | DIGIT+? ('.' DIGIT?)? 't'
     | DIGIT DIGIT ':' DIGIT DIGIT 't'
     | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT 't'
     | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT* 't'
     | '0Nt' | '0Wt' | '-0Wt';
-// TIME_LIST is of form ((MINUTE|SECOND)+? TIME (MINUTE|SECOND|TIME)* | TIME (MINUTE|SECOND|TIME)*) ((MINUTE|SECOND|TIME) TIME_SUFFIX?|TIME_SUFFIXED)?
-//                        | (MINUTE|SECOND|TIME)+ ((MINUTE 't' |SECOND|TIME) TIME_SUFFIX|TIME_SUFFIXED)
 
 
 fragment

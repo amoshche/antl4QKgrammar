@@ -17,38 +17,6 @@ expr: expr PLUS<assoc=right> expr
       | alist
       | atom;
 
-
-atom: asymbol
-    | achar
-    | aguid
-    | aboolean
-    | abyte
-    | ashort
-    | aint
-    | areal
-    | afloat
-    | along
-    | amonth
-    | adate
-    ;
-
-asymbol: SYMBOL;
-achar: CHAR;
-aguid: GUID;
-aboolean: BOOLEAN;
-abyte: BYTE;
-aint: INT;
-ashort: SHORT ;
-areal: REAL;
-afloat: FLOAT | FLOAT_SUFFIXED;
-along: LONG | LONG_SUFFIXED;
-amonth: MONTH;
-adate: DATE;
-aminute: MINUTE;
-asecond: SECOND;
-atime: TIME;
-    
-
 alist: symbollist
      | charlist
      | booleanlist
@@ -58,8 +26,11 @@ alist: symbollist
      | reallist
      | monthlist
      | floatlist
-     | longlist
      | datelist
+     | timelist
+     | secondlist
+     | minutelist
+     | longlist
      ; 
 
 //Order is important
@@ -71,12 +42,55 @@ shortlist: LONG<assoc=right>+? SHORT;
 intlist: LONG<assoc=right>+? INT;
 reallist: (LONG<assoc=right>|FLOAT<assoc=right>)+? REAL;
 monthlist: FLOAT<assoc=right>+? MONTH; //if FLOATS can be read as MONTHS
-floatlist: FLOAT<assoc=right>+ (LONG<assoc=right>|FLOAT<assoc=right>)+ FLOAT_SUFFIXED?
-         | LONG<assoc=right>+? FLOAT<assoc=right>+ (LONG<assoc=right>|FLOAT<assoc=right>)* FLOAT_SUFFIXED?
-         | LONG<assoc=right>+ (LONG<assoc=right>|FLOAT<assoc=right>)* (FLOAT|FLOAT_SUFFIXED);
-longlist: LONG<assoc=right>+ (LONG | LONG_SUFFIXED);
+floatlist: (LONG<assoc=right>|FLOAT<assoc=right>)+ FLOAT_SUFFIXED
+         | FLOAT<assoc=right>+ (LONG<assoc=right>|FLOAT<assoc=right>)+
+         | LONG<assoc=right>+? FLOAT<assoc=right> (LONG<assoc=right>|FLOAT<assoc=right>)*
+         | (LONG<assoc=right>|FLOAT<assoc=right>)+ FLOAT;
 datelist: DATE<assoc=right>+ (DATE | DATE_SUFFIXED);
+minutelist: (LONG<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)+ MINUTE_SUFFIXED
+         | MINUTE<assoc=right>+ (LONG<assoc=right>|MINUTE<assoc=right>)+
+         | LONG<assoc=right>+ MINUTE<assoc=right> (LONG<assoc=right>|MINUTE<assoc=right>)*;
+secondlist: (LONG<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)+ SECOND_SUFFIXED
+         | SECOND<assoc=right>+ (LONG<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>)+
+         | (LONG<assoc=right>|MINUTE<assoc=right>)+ SECOND<assoc=right> (LONG<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>)*;
+timelist: (LONG<assoc=right>|FLOAT<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)+? TIME_SUFFIXED
+         | TIME<assoc=right>+ (LONG<assoc=right>|FLOAT<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)+
+         | (LONG<assoc=right>|FLOAT<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>)+ TIME<assoc=right> (LONG<assoc=right>|FLOAT<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)*;
+longlist: LONG<assoc=right>+ (LONG | LONG_SUFFIXED);
 
+atom: asymbol
+    | achar
+    | aguid
+    | aboolean
+    | abyte
+    | ashort
+    | aint
+    | areal
+    | amonth
+    | afloat
+    | adate
+    | aminute
+    | asecond
+    | atime
+    | along
+    ;
+
+asymbol: SYMBOL;
+achar: CHAR;
+aguid: GUID;
+aboolean: BOOLEAN;
+abyte: BYTE;
+aint: INT;
+ashort: SHORT ;
+areal: REAL;
+amonth: MONTH;
+afloat: FLOAT | FLOAT_SUFFIXED;
+adate: DATE | DATE_SUFFIXED;
+aminute: MINUTE | MINUTE_SUFFIXED;
+asecond: SECOND | SECOND_SUFFIXED;
+atime: TIME | TIME_SUFFIXED;
+along: LONG | LONG_SUFFIXED;
+    
 //statement: (ML_STATEMENT | SL_STATEMENT); 
 //statement: (ML_STATEMENT_START ML_STATEMENT_LINE* ML_STATEMENT_END? | SL_STATEMENT); 
 
