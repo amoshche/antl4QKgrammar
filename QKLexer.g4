@@ -85,6 +85,21 @@ DOT: '.';
 AT: '@';
 //AT_AMEND_TRAP_MODE: '.';
 CAST: '$';
+// SYMBOL $ arg | CHAR $ arg | SHORT $ arg
+// LONG $ CHAR_LIST padding
+// calculate the dot product of two float lists
+// q)1 2 3f$4 5 6f
+// 32f
+// calculate the product of two float matrices
+// q)(1 2 3f;4 5 6f)$(7 8f;9 10f;11 12f)
+// 58  64
+// 139 154
+// $[ ; ; ] conditional evaluation
+// $[0b;`a;] `b
+// $[1b;;`b] `a
+//$[;`a;`b]1b
+//'2014.08.04T15:05:13.472 type
+
 //TODO -1! 0! etc
 EMARK: '!';
 //UPDATE_QUERY_MODE: '!';
@@ -101,6 +116,17 @@ QMARK: '?';
 //1 | -1 WS+ "asd" stdout
 //2 | -2 WS+ "asd" stderr
 //other pos/neg int followed by () or "" is handle call
+/*
+This seems to allow spaces in between arg and $
+ICAST:  '1h$' | '2h$' | '4h$' | '5h$' | '6h$' | '7h$' | '8h$' | '9h$' | '10h$' | '11h$' | '12h$' | '13h$' | '14h$' | '15h$' | '16h$' | '17h$' | '18h$' | '19h$';
+CCAST: '"b"$' | '"g"$' | '"x"$' | '"h"$' | '"i"$' | '"j"$' | '"e"$' | '"f"$' | '"c"$' | '"s"$' | '"p"$' | '"m"$' | '"d"$' | '"z"$' | '"n"$' | '"u"$' | '"v"$' | '"t"$';
+CPARSE: '"B"$' | '"G"$' | '"X"$' | '"H"$' | '"I"$' | '"J"$' | '"E"$' | '"F"$' | '"C"$' | '"S"$' | '"P"$' | '"M"$' | '"D"$' | '"Z"$' | '"N"$' | '"U"$' | '"V"$' | '"T"$';
+SCAST:  '`boolean$1' | '`guid$1' | '`byte$' | '`short$' | '`int$' | '`long$' | '`real$' | '`float$' | '`char$' | '`$' | '`timestamp$' | '`month$' | '`date$' | '`datetime$' | '`timespan$' | '`minute$' | '`second$' | '`time$';
+ENUMEMPTYLIST: '`'(DOT (LETTER | LETTER (DROP_CUT|LETTER|DIGIT)* (LETTER|DIGIT)))+
+              | (LETTER | LETTER (DROP_CUT|LETTER|DIGIT)* (LETTER|DIGIT))'$()';
+ENUMCAST: '`'(DOT (LETTER | LETTER (DROP_CUT|LETTER|DIGIT)* (LETTER|DIGIT)))+
+              | (LETTER | LETTER (DROP_CUT|LETTER|DIGIT)* (LETTER|DIGIT))'$';
+*/
 
 DATETIMEOP: '.date' | '.year' | '.mm' | '.dd' | '.time' | '.hh' | '.minute' | '.ss';
 
@@ -215,7 +241,7 @@ TIMESTAMP_SUFFIXED: DIGIT+? ('.' DIGIT?)? 'p'
 // TIMESTAMP_LIST is of form (FLOAT|MINUTE|SECOND|TIME|TIMESPAN|DATE|TIMESTAMP)+? (TIMESTAMP|TIMESTAMP_SUFFIXED)?
 
 //   char related
-SYMBOL: '`'((LETTER|DIGIT|'.'|':') (LETTER|DIGIT|'.'|':'|'_')* | (LETTER|DIGIT|'.'|':')* ) ('/' | '\\')*;
+SYMBOL: '`'((LETTER|DIGIT|'.'|':') (LETTER|DIGIT|'.'|':'|'_')* | (LETTER|DIGIT|'.'|':')* );
 SYMBOL_LIST: SYMBOL SYMBOL+;
 
 CHAR: '"'('\\' DIGIT DIGIT DIGIT | '\\\\' |  '\\"' | ' ' | '\\t' | '\\r' | '\\n' | ASCII_PRINTABLE )'"';

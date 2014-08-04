@@ -44,6 +44,9 @@ afloat: FLOAT | FLOAT_SUFFIXED;
 along: LONG | LONG_SUFFIXED;
 amonth: MONTH;
 adate: DATE;
+aminute: MINUTE;
+asecond: SECOND;
+atime: TIME;
     
 
 alist: symbollist
