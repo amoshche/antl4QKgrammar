@@ -61,7 +61,7 @@ alist: symbollist
 
 //Order is important
 symbollist: SYMBOL_LIST;
-charlist: CHAR_LIST;
+charlist: EMPTY_CHAR_LIST | CHAR_LIST_START CHAR_LIST_PART+? CHAR_LIST_END;
 booleanlist: BOOLEAN_LIST;
 bytelist: BYTE_LIST;
 shortlist: LONG<assoc=right>+? SHORT;

@@ -15,7 +15,7 @@
 "\123"
 " "
 "a"
-/
+
 ""
 "ab"
 "a\456"
@@ -24,7 +24,17 @@
 "ab\""
 "ab\"c"
 "ab\\\"c"
+"c /comment
+  d"
+"e
+/comment
+  f"
+"g
+/
+mlcomment
 \
+  h"
+
 0b
 1b
 01b

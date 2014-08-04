@@ -219,8 +219,10 @@ SYMBOL: '`'((LETTER|DIGIT|'.'|':') (LETTER|DIGIT|'.'|':'|'_')* | (LETTER|DIGIT|'
 SYMBOL_LIST: SYMBOL SYMBOL+;
 
 CHAR: '"'('\\' DIGIT DIGIT DIGIT | '\\\\' |  '\\"' | ' ' | '\\t' | '\\r' | '\\n' | ASCII_PRINTABLE )'"';
-//TODO via mode legal to have spaces and comments inside does not count
-//CHAR_LIST: '""' | '"' ( '\\\\' | '\\"' | '\\' DIGIT DIGIT DIGIT | ~('"'|'\\'). ) ( '\\\\' | '\\"' | '\\' DIGIT DIGIT DIGIT | ~('"'|'\\'). )+? '"';
+EMPTY_CHAR_LIST: '""';
+CHAR_LIST_START: '"'  { (_input.LA(1)=='\\' && isDigit(_input.LA(2)) && isDigit(_input.LA(3)) && isDigit(_input.LA(4)) && _input.LA(5) != '"')
+                 || (_input.LA(1)=='\\' && (_input.LA(2) == '\\' || _input.LA(2) == '"' || _input.LA(2) == 't' || _input.LA(2) == 'n' || _input.LA(2) == 'r' ) && _input.LA(3) != '"')
+                 || (_input.LA(1)!='\\' &&  _input.LA(2) != '"') }? -> pushMode(INSIDE_CHAR_LIST);
 
 ID: LETTER 
     | LETTER (DROP_CUT|LETTER|DIGIT)* (LETTER|DIGIT)
@@ -238,6 +240,20 @@ SL_COMMENT: ({getCharPositionInLine() == 0}?'/'NOT_WS_NOR_NL_TOKEN NOT_NL_TOKEN*
             | {getCharPositionInLine() == 0}?'/'WS_TOKEN+ NOT_WS_NOR_NL_TOKEN NOT_NL_TOKEN*) -> channel(COMMENTS);
 
 ML_COMMENT: {getCharPositionInLine() == 0}?'/' WS_TOKEN* NL_TOKEN .*?
-            ('\\' WS_TOKEN* {_input.LA(1) == '\r' || _input.LA(1) == '\n'}? | EOF) -> channel(COMMENTS);
+            ({getCharPositionInLine() == 0}? '\\' WS_TOKEN* {_input.LA(1) == '\r' || _input.LA(1) == '\n'}? | EOF) -> channel(COMMENTS);
 
 SKIP_WS: WS_TOKEN+ -> channel(WHITESPACE); 
+
+mode INSIDE_CHAR_LIST;
+CHAR_LIST_END: {_input.LA(-1) != '\\'}? '"' -> popMode;
+
+INSIDE_CHAR_LIST_EL_COMMENT: {_input.LA(-1) != '\\' && _input.LA(-1) != '\n' && _input.LA(-1) != ' ' && _input.LA(-1) != '\t'}? WS_TOKEN+ '/' NOT_NL_TOKEN* -> channel(COMMENTS);
+
+INSIDE_CHAR_LIST_SL_COMMENT: ({getCharPositionInLine() == 0}?'/'NOT_WS_NOR_NL_TOKEN NOT_NL_TOKEN*? NL_TOKEN 
+            | {getCharPositionInLine() == 0}?'/'WS_TOKEN+ NOT_WS_NOR_NL_TOKEN NOT_NL_TOKEN*? NL_TOKEN) -> channel(COMMENTS);
+
+INSIDE_CHAR_LIST_ML_COMMENT: {getCharPositionInLine() == 0}?'/' WS_TOKEN* NL_TOKEN .*?
+            ({getCharPositionInLine() == 0}? '\\' WS_TOKEN* ? NL_TOKEN | EOF) -> channel(COMMENTS);
+
+//TODO Better error check on disallowed \1 \12 \~[\"trn] etc
+CHAR_LIST_PART: .+?;
