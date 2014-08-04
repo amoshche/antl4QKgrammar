@@ -4,8 +4,6 @@ lexer grammar QKLexer;
     public static final int WHITESPACE = 1;
     public static final int COMMENTS = 2;
 
-    boolean statementOpened = false;
-    
     boolean isDigit(int i) {
        return (i>='0' && i<='9');
     }
@@ -39,7 +37,7 @@ fragment
 LETTER: ('a'..'z'|'A'..'Z');
 
 fragment
-ASCII_PRINTABLE: (' '..'~');
+ASCII_PRINTABLE: ('!'|'#'..'['|']'..'~');
 
 FUNS: '{' ;
 FUNE: '}' ;
@@ -68,20 +66,19 @@ DROP_CUT: '_';
 TAKE: '#';
 
 SEPARATOR: ';';
-SYMBOLS: '`';
 
 COLON: {_input.LA(-1) != '\'' && _input.LA(-1) != '\\' && _input.LA(-1) != '/' && _input.LA(-1) != ':'}?':';
-COLON0: '0'':'; //TEXT FILE
-COLON1: '1'':'; //BINARY FILE
-COLON2: '2'':'; //LIB | PROC/MESSAGE
-DOUBLECOLON: ':'':';
-PEACH: '\''':';
-EACHRIGHT: '/'':';
-EACHLEFT: '\\'':';
+COLON0: '0:'; //TEXT FILE
+COLON1: '1:'; //BINARY FILE
+COLON2: '2:'; //LIB | PROC/MESSAGE
+DOUBLECOLON: '::';
+PEACH: '\':';
+EACHRIGHT: '/:';
+EACHLEFT: '\\:';
 EACH: '\''{_input.LA(1) != ':'}?; //each or throw
 
-OVER:'/';
-SCAN:'\\';
+OVER:'/'{_input.LA(1) != ':'}?;
+SCAN:'\\'{_input.LA(1) != ':'}?;
 
 DOT: '.';
 //DOT_AMEND_TRAP_MODE: '.';
@@ -105,8 +102,9 @@ QMARK: '?';
 //2 | -2 WS+ "asd" stderr
 //other pos/neg int followed by () or "" is handle call
 
+DATETIMEOP: '.date' | '.year' | '.mm' | '.dd' | '.time' | '.hh' | '.minute' | '.ss';
 
-//atoms
+//atoms and lists
 //   numeric
 fragment
 NUM_DEC_PREFIX: ('-')? DIGIT+;
@@ -117,18 +115,11 @@ LONG_SUFFIXED: NUM_DEC_PREFIX 'j' | '0Nj' | '0Wj' | '-0Wj';
 INT: NUM_DEC_PREFIX 'i' | '0Ni' | '0Wi' | '-0Wi';	
 
 SHORT: NUM_DEC_PREFIX 'h' | '0Nh' | '0Wh' | '-0Wh';	
-//LIST of LONG INT OR SHORT is LONG+ (LONG LONG_SUFFIX?|LONG_NAN|INT|SHORT)?;
 
-FLOAT: NUM_DEC_PREFIX?'.'DIGIT+|NUM_DEC_PREFIX'.'DIGIT*;
-FLOAT_EXP: NUM_DEC_PREFIX?'.'DIGIT+|NUM_DEC_PREFIX'.'DIGIT*'e''-'?DIGIT+;
-FLOAT_NAN: '0n' | '0w' | '-0w';
-FLOAT_SUFFIXED: (NUM_DEC_PREFIX?'.'DIGIT+|NUM_DEC_PREFIX'.'DIGIT*
-                | NUM_DEC_PREFIX?'.'DIGIT+|NUM_DEC_PREFIX'.'DIGIT*'e''-'?DIGIT+
-                | '0n' | '0w' | '-0w')'f';
+FLOAT: (('-.'| NUM_DEC_PREFIX?'.')DIGIT+|NUM_DEC_PREFIX'.'DIGIT*)('e''-'?DIGIT+)? | '0n' | '0w' | '-0w';
+FLOAT_SUFFIXED: (NUM_DEC_PREFIX|(('-.'| NUM_DEC_PREFIX?'.')DIGIT+|NUM_DEC_PREFIX'.'DIGIT*)('e''-'?DIGIT+)?)'f' | '0nf' | '0wf' | '-0wf';
 
-REAL: (NUM_DEC_PREFIX?'.'DIGIT+|NUM_DEC_PREFIX'.'DIGIT*)('e''-'?DIGIT+)? 'e' | '0ne' | '0we' | '-0we' | '0Ne' | '0We' | '-0We';	
-//LIST of FLOAT OR REAL is ((LONG)+? (FLOAT|FLOAT_EXP|FLOAT_NAN) (LONG|FLOAT|FLOAT_EXP|FLOAT_NAN)*
-//   | (FLOAT|FLOAT_EXP|FLOAT_NAN) (LONG|FLOAT|FLOAT_EXP|FLOAT_NAN)*) (FLOAT|FLOAT_EXP|FLOAT_NAN|FLOAT_SUFFIXED|REAL)?;
+REAL: (NUM_DEC_PREFIX|(('-.'| NUM_DEC_PREFIX?'.')DIGIT+|NUM_DEC_PREFIX'.'DIGIT*)('e''-'?DIGIT+)?) 'e' { !isDigit(_input.LA(1)) &&  _input.LA(1)!= '-' }? | '0ne' | '0we' | '-0we' | '0Ne' | '0We' | '-0We';	
 
 //   binary
 BOOLEAN: '0b' | '1b';
@@ -137,26 +128,15 @@ BOOLEAN_LIST: ('0'|'1')('0'|'1')+'b';
 BYTE: '0x' HEX HEX;
 BYTE_LIST: '0x' HEX HEX HEX+;
 
-//   TODO guid
+//   guid
+GUID: '0Ng';
 
 //   temporal
 
-// date
-// TODO possible calls on a variable if this is not overriden key
-// .date
-// .year
-// .mm
-// .dd
-// .time
-// .hh
-// .minute
-// .ss
 MONTH: DIGIT DIGIT DIGIT DIGIT '.' DIGIT DIGIT 'm' | '0Nm' | '0Wm' | '-0Wm';
-// MONTH_LIST is interpreted from (FLOAT)+ MONTH? if FLOATS can be read as MONTHS
 
 DATE: DIGIT DIGIT DIGIT DIGIT '.' DIGIT DIGIT '.' DIGIT DIGIT;
 DATE_SUFFIXED: DIGIT DIGIT DIGIT DIGIT '.' DIGIT DIGIT '.' DIGIT DIGIT 'd' | '0Nd' | '0Wd' | '-0Wd';
-// DATE_LIST is of form DATE+ (DATE | DATE_SUFFIXED)
 
 MINUTE: DIGIT DIGIT ':' (DIGIT DIGIT)?; 
 MINUTE_SUFFIXED: DIGIT DIGIT ':'? 'u'
@@ -198,15 +178,15 @@ DATETIME_SUFFIXED: DATE_FRAGMENT 'T' 'z'
     | DATE_FRAGMENT 'T' DIGIT DIGIT ':' DIGIT DIGIT 'z'
     | DATE_FRAGMENT 'T' DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT ('.' DIGIT*)? 'z'
     | '0Nz' | '0Wz' | '-0Wz';
-//DATE_TIME LIST is of form (DATE|DATETIME)+ (DATETIME | DATETIME_SUFFIXED)
+//DATE_TIME LIST is of form (DATE|DATETIME|TIMESTAMP)+ (DATETIME | DATETIME_SUFFIXED)
 
 TIMESPAN: DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT DIGIT DIGIT DIGIT DIGIT+
     | DIGIT+ 'D' DIGIT*? ('.' DIGIT?)?
     | DIGIT+ 'D' DIGIT DIGIT ':' DIGIT DIGIT
     | DIGIT+ 'D' DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT
     | DIGIT+ 'D' DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT*;
-TIMESPAN_SUFFIXED: DIGIT DIGIT ':' 'n'
-    | DIGIT+? ('.' DIGIT?)? 'n'
+TIMESPAN_SUFFIXED: DIGIT+? ('.' DIGIT?)? 'n'
+    | DIGIT DIGIT ':' 'n'
     | DIGIT DIGIT ':' DIGIT DIGIT 'n'
     | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT 'n'
     | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT* 'n'
@@ -217,17 +197,30 @@ TIMESPAN_SUFFIXED: DIGIT DIGIT ':' 'n'
     | '0Nn' | '0Wn' | '-0Wn';
 // TIMESPAN_LIST is of form (FLOAT|MINUTE|SECOND|TIME|TIMESPAN)+? (TIMESPAN|TIMESPAN_SUFFIXED)?
     
-// timestamp
+TIMESTAMP: DATE_FRAGMENT 'D' DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT DIGIT DIGIT DIGIT DIGIT+
+    | DATE_FRAGMENT 'D' DIGIT*? ('.' DIGIT?)?
+    | DATE_FRAGMENT 'D' DIGIT DIGIT ':' DIGIT DIGIT
+    | DATE_FRAGMENT 'D' DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT
+    | DATE_FRAGMENT 'D' DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT*;
+TIMESTAMP_SUFFIXED: DIGIT+? ('.' DIGIT?)? 'p'
+    | DIGIT DIGIT ':' 'p'
+    | DIGIT DIGIT ':' DIGIT DIGIT 'p'
+    | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT 'p'
+    | DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT* 'p'
+    | DIGIT+ 'D' DIGIT*? ('.' DIGIT?)? 'p'
+    | DIGIT+ 'D' DIGIT DIGIT ':' DIGIT DIGIT 'p'
+    | DIGIT+ 'D' DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT 'p'
+    | DIGIT+ 'D' DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT '.' DIGIT* 'p'
+    | '0Np' | '0Wp' | '-0Wp';
+// TIMESTAMP_LIST is of form (FLOAT|MINUTE|SECOND|TIME|TIMESPAN|DATE|TIMESTAMP)+? (TIMESTAMP|TIMESTAMP_SUFFIXED)?
 
 //   char related
-SYMBOL: '`' ((LETTER|DIGIT|'.'|':')* 
-             | (LETTER|DIGIT|'.'|':') (LETTER|DIGIT|'.'|':'|'_')*
-            ) ('/' | '\\')*;
+SYMBOL: '`'((LETTER|DIGIT|'.'|':') (LETTER|DIGIT|'.'|':'|'_')* | (LETTER|DIGIT|'.'|':')* ) ('/' | '\\')*;
 SYMBOL_LIST: SYMBOL SYMBOL+;
 
-CHAR: '"'('\\' DIGIT DIGIT DIGIT | '\\''\\' |  '\\''"' | ' ' | '\\''t' | '\\''r' | '\\''n' | ASCII_PRINTABLE )'"';
-//   TODO char list
-CHAR_LIST: '"''"' | '"' ~('"')*? '"';
+CHAR: '"'('\\' DIGIT DIGIT DIGIT | '\\\\' |  '\\"' | ' ' | '\\t' | '\\r' | '\\n' | ASCII_PRINTABLE )'"';
+//TODO via mode legal to have spaces and comments inside does not count
+//CHAR_LIST: '""' | '"' ( '\\\\' | '\\"' | '\\' DIGIT DIGIT DIGIT | ~('"'|'\\'). ) ( '\\\\' | '\\"' | '\\' DIGIT DIGIT DIGIT | ~('"'|'\\'). )+? '"';
 
 ID: LETTER 
     | LETTER (DROP_CUT|LETTER|DIGIT)* (LETTER|DIGIT)
