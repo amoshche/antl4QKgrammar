@@ -47,15 +47,27 @@ floatlist: (LONG<assoc=right>|FLOAT<assoc=right>)+ FLOAT_SUFFIXED
          | LONG<assoc=right>+? FLOAT<assoc=right> (LONG<assoc=right>|FLOAT<assoc=right>)*
          | (LONG<assoc=right>|FLOAT<assoc=right>)+ FLOAT;
 datelist: DATE<assoc=right>+ (DATE | DATE_SUFFIXED);
-minutelist: (LONG<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)+ MINUTE_SUFFIXED
-         | MINUTE<assoc=right>+ (LONG<assoc=right>|MINUTE<assoc=right>)+
-         | LONG<assoc=right>+ MINUTE<assoc=right> (LONG<assoc=right>|MINUTE<assoc=right>)*;
-secondlist: (LONG<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)+ SECOND_SUFFIXED
-         | SECOND<assoc=right>+ (LONG<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>)+
-         | (LONG<assoc=right>|MINUTE<assoc=right>)+ SECOND<assoc=right> (LONG<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>)*;
-timelist: (LONG<assoc=right>|FLOAT<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)+? TIME_SUFFIXED
-         | TIME<assoc=right>+ (LONG<assoc=right>|FLOAT<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)+
-         | (LONG<assoc=right>|FLOAT<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>)+ TIME<assoc=right> (LONG<assoc=right>|FLOAT<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)*;
+minutelist: MINUTE<assoc=right>+ ((LONG<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)*? MINUTE_SUFFIXED
+             | (LONG<assoc=right>|MINUTE<assoc=right>)+)
+          | LONG<assoc=right>+? MINUTE<assoc=right>
+            ((LONG<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)*? MINUTE_SUFFIXED
+             | (LONG<assoc=right>|MINUTE<assoc=right>)*)
+          | (LONG<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)+? MINUTE_SUFFIXED
+          ;
+secondlist: SECOND<assoc=right>+ ((LONG<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)*? SECOND_SUFFIXED
+             | (LONG<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>)+)
+          | (LONG<assoc=right>|MINUTE<assoc=right>)+? SECOND<assoc=right>
+            ((LONG<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)*? SECOND_SUFFIXED
+             |(LONG<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>)*)
+          | (LONG<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)+? SECOND_SUFFIXED
+          ;
+timelist:   TIME<assoc=right>+ ((LONG<assoc=right>|FLOAT<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)*? TIME_SUFFIXED
+             | (LONG<assoc=right>|FLOAT<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)+)
+          | (LONG<assoc=right>|FLOAT<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>)+? TIME<assoc=right>
+            ((LONG<assoc=right>|FLOAT<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)*? TIME_SUFFIXED
+             |(LONG<assoc=right>|FLOAT<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)*) 
+          | (LONG<assoc=right>|FLOAT<assoc=right>|MINUTE<assoc=right>|SECOND<assoc=right>|TIME<assoc=right>)+? TIME_SUFFIXED
+          ;
 longlist: LONG<assoc=right>+ (LONG | LONG_SUFFIXED);
 
 atom: asymbol
