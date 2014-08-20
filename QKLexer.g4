@@ -59,10 +59,10 @@ PLUS: '+';
 MINUS: '-';
 TIMES: '*';
 DIVIDE: '%';
-FILL: '^'; //coalesce
+FILL: '^';
 
-JOIN: ','; //enlist in some cases in k)
-DROP_CUT: '_';
+JOIN: ',';
+DROP_CUT: '_'; //can be without whitespace in dyadic case if not after the symbol`
 TAKE: '#';
 
 SEPARATOR: ';';
@@ -71,7 +71,7 @@ COLON: {_input.LA(-1) != '\'' && _input.LA(-1) != '\\' && _input.LA(-1) != '/' &
 COLON0: '0:'; //TEXT FILE
 COLON1: '1:'; //BINARY FILE
 COLON2: '2:'; //LIB | PROC/MESSAGE
-DOUBLECOLON: '::';
+GEN_NULL_OR_GLOBAL_AMEND: '::';
 PEACH: '\':';
 EACHRIGHT: '/:';
 EACHLEFT: '\\:';
@@ -80,11 +80,55 @@ EACH: '\''{_input.LA(1) != ':'}?; //each or throw
 OVER:'/'{_input.LA(1) != ':'}?;
 SCAN:'\\'{_input.LA(1) != ':'}?;
 
+// VERBS
+
 DOT: '.';
-//DOT_AMEND_TRAP_MODE: '.';
+// dyadic
+// apply for anyvalent (arg is list) or index in depth
+// id|(expr)|f[]|table|list . a
+// apply for monadic
+// The general form of functional . for a monadic function is,
+// .[L;I;f]
+// Notation is suggestive of lists, 
+// but L is a mapping with explicit domain, 
+// I is a list in the domain of L,
+// f is a monadic function
+// f[L . I]
+// apply for dyadic
+// .[L;I;f;y]
+// f is a dyadic function and y is an atom or list of the proper shape
+// (L . I) f y		/ binary operator
+// f[L . I;y]		/ dyadic function
+// protected trap
+// .[fmul;Largs;exprfail]
+
 AT: '@';
-//AT_AMEND_TRAP_MODE: '.';
+// dyadic
+// apply for monadic
+// id|(expr)|f[]|table|list . a // can be a\ list if indexes, or list of args, returns a list of application of left on each right
+// fn@0N -> fn` | fn[]
+// apply for monadic
+// @ for a monadic function is
+// @[L;I;f]
+// Notation is suggestive of lists, 
+// but L is a mapping with explicit domain, 
+// I is a list in the domain of L,
+// f is a monadic function
+// f L[I]
+// @ for dyadic
+// @[L;I;f;y]
+// f is a dyadic function and y is an atom or list of the proper shape
+// L[I] f y		/ binary operator
+// f[L[I];y]		/ dyadic function
+// @[`L;I;:;42]         / update named list L
+// protected trap
+// @[fmon;a;exprfail]
+
 CAST: '$';
+// dyadic cases
+// dyadic is cast, pad, save sym file after enum
+// id|atom|(expr)|f[]|table|list $ expr
+// { x } $ ({ x };{ x+x }) 'type
 // SYMBOL $ arg | CHAR $ arg | SHORT $ arg
 // LONG $ CHAR_LIST padding
 // calculate the dot product of two float lists
@@ -102,16 +146,24 @@ CAST: '$';
 
 //TODO -1! 0! etc
 EMARK: '!';
+// dyadic
+// id|atom|(expr)|f[]|table|list ! expr
+// neg int! expr -> internal function
+// key, dict, enum by list, lsq
+// { x } $ ({ x };{ x+x }) 'type
 //UPDATE_QUERY_MODE: '!';
 //ENUM
 //KEY
 //DICT
 //0N ! etc...
 QMARK: '?';
-//QMARK_COND_QUERY_MODE: '?';
-//FIND
-//RAND
-//`:sym?
+// dyadic cases
+// dyadic is find, rand, save sym file after enum
+// id|atom|(expr)|f[]|table|list ? expr
+// { x } ? ({ x };{ x+x }) 'type
+// ?[v;t;f] 3 argument vector conditional
+// ?[t;i;x] 3 argument f select
+// ?[t;i;x;] 4 argument f select
 
 //1 | -1 WS+ "asd" stdout
 //2 | -2 WS+ "asd" stderr
